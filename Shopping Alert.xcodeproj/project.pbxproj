@@ -156,6 +156,7 @@
 		C0480D841A399F8D008E5C2F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0720;
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = Appcoda;
 				TargetAttributes = {
@@ -405,6 +406,7 @@
 				C0480DAD1A399F8E008E5C2F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C0480DAE1A399F8E008E5C2F /* Build configuration list for PBXNativeTarget "Shopping AlertTests" */ = {
 			isa = XCConfigurationList;
@@ -413,6 +415,7 @@
 				C0480DB01A399F8E008E5C2F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
