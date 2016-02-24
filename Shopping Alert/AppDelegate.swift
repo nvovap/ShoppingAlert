@@ -13,6 +13,46 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    
+    func application(application: UIApplication, didRegisterUserNotificationSettings notificationSettings: UIUserNotificationSettings) {
+        print(notificationSettings.types.rawValue)
+    }
+    
+    func application(application: UIApplication, didReceiveLocalNotification notification: UILocalNotification) {
+        print("Received Local Notification:")
+        print(notification.alertBody)
+    }
+    
+    
+    
+   
+    func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forRemoteNotification userInfo: [NSObject : AnyObject], withResponseInfo responseInfo: [NSObject : AnyObject], completionHandler: () -> Void) {
+        
+        
+        print(responseInfo)
+        
+        completionHandler()
+    }
+    
+    
+    
+    func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forLocalNotification notification: UILocalNotification, withResponseInfo responseInfo: [NSObject : AnyObject], completionHandler: () -> Void) {
+        
+        
+        if identifier == "editList", let response = responseInfo[UIUserNotificationActionResponseTypedTextKey], let responseText = response as? String {
+            
+            print(responseText)
+            
+            NSNotificationCenter.defaultCenter().postNotificationName("modifyListNotification", object: responseText)
+        } else if identifier == "trashAction" {
+            NSNotificationCenter.defaultCenter().postNotificationName("deleteListNotification", object: nil)
+        }
+
+        completionHandler()
+    }
+    
+   
+    
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.

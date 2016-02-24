@@ -21,6 +21,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var shoppingList: NSMutableArray!
     
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -34,14 +40,25 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         
         loadShoppingList()
+        
+        setupNotificationSetting()
+        
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "handleModifyListNotification:", name: "modifyListNotification", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "handleDeleteListNotification", name: "deleteListNotification", object: nil)
     }
     
     
     @IBAction func sheduleReminder(sender: UIButton) {
         if datePicker.hidden {
             animateMyViews(tblShoppingList, viewToShow: datePicker)
+            
+            UIApplication.sharedApplication().cancelAllLocalNotifications()
+            
         } else {
             animateMyViews(datePicker, viewToShow: tblShoppingList)
+            
+            scheduleLocalNotification()
         }
         
         txtAddItem.enabled = !txtAddItem.enabled
@@ -49,40 +66,111 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     
     // MARK: - Implementation notification 
+    
+    func handleModifyListNotification(notification: NSNotification) {
+        
+        shoppingList.addObject(notification.object as! String)
+        
+        tblShoppingList.reloadData()
+        saveShoppingList()
+        
+    }
+    
+    
+    func handleDeleteListNotification() {
+        shoppingList.removeAllObjects()
+        saveShoppingList()
+        tblShoppingList.reloadData()
+    }
+    
+    
+    func fixNotificationDate(dateToFix: NSDate) -> NSDate {
+        let dateComponent = NSCalendar.currentCalendar().components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Hour, NSCalendarUnit.Minute], fromDate: dateToFix)
+        
+        dateComponent.second = 0
+        
+        let fixedDate = NSCalendar.currentCalendar().dateFromComponents(dateComponent)!
+        
+        return fixedDate
+    }
+    
+    
+    func scheduleLocalNotification() {
+        let locationNotification = UILocalNotification()
+        
+        locationNotification.fireDate = fixNotificationDate(datePicker.date)
+        
+        locationNotification.alertBody = "Hey, you must go shoping, remember?"
+        locationNotification.alertAction = "View List"
+        
+        locationNotification.category = "shoppingListReminderCategory"
+        
+        UIApplication.sharedApplication().scheduleLocalNotification(locationNotification)
+        
+    }
+    
     func setupNotificationSetting() {
         
-        var justInformAction = UIMutableUserNotificationAction()
-        justInformAction.identifier = "justInform"
-        justInformAction.title = "OK, got it"
-        justInformAction.activationMode = UIUserNotificationActivationMode.Background
-        justInformAction.destructive = false
-        justInformAction.authenticationRequired = false
+        
+        let notificationSettings: UIUserNotificationSettings! = UIApplication.sharedApplication().currentUserNotificationSettings()
+        
+        if notificationSettings.types == UIUserNotificationType.None {
+            
+            
+            // Specify the notification types
+            let notificationTypes: UIUserNotificationType = [UIUserNotificationType.Alert, UIUserNotificationType.Sound]
+            
+            
+            // Specify the notification actions
+            let justInformAction = UIMutableUserNotificationAction()
+            justInformAction.identifier = "justInform"
+            justInformAction.title = "OK, got it"
+            justInformAction.activationMode = UIUserNotificationActivationMode.Background
+            justInformAction.destructive = false
+            justInformAction.authenticationRequired = false
+            
+            
+            let modifyListAction = UIMutableUserNotificationAction()
+            modifyListAction.identifier = "editList"
+            modifyListAction.title = "Edit list"
+           
+            modifyListAction.destructive = false
+            modifyListAction.authenticationRequired = false
+          
+            modifyListAction.behavior = .TextInput
+            modifyListAction.activationMode = UIUserNotificationActivationMode.Background
+            
+            
+            let trashAction = UIMutableUserNotificationAction()
+            trashAction.identifier = "trashAction"
+            trashAction.title = "Delete list"
+            trashAction.activationMode = UIUserNotificationActivationMode.Foreground
+            trashAction.destructive = false
+            trashAction.authenticationRequired = true
+            
+            let actionsArray = [justInformAction, modifyListAction, trashAction]
+            let actionsArrayMinimal = [trashAction, modifyListAction]
+            
+            
+            // Specify the category related to above actions.
+            let shoppingListReminderCategory = UIMutableUserNotificationCategory()
+            shoppingListReminderCategory.identifier = "shoppingListReminderCategory"
+            shoppingListReminderCategory.setActions(actionsArray, forContext: UIUserNotificationActionContext.Default)
+            shoppingListReminderCategory.setActions(actionsArrayMinimal, forContext: UIUserNotificationActionContext.Minimal)
+            
+            
+            let categoriesForSettings = Set(arrayLiteral: shoppingListReminderCategory)
+            
+            
+            // Register the notification settings
+            let newNotificationSettings = UIUserNotificationSettings(forTypes: notificationTypes, categories: categoriesForSettings)
+            
+            UIApplication.sharedApplication().registerUserNotificationSettings(newNotificationSettings)
+            
+        }
         
         
-        var modifyListAction = UIMutableUserNotificationAction()
-        modifyListAction.identifier = "editList"
-        modifyListAction.title = "Edit list"
-        modifyListAction.activationMode = UIUserNotificationActivationMode.Foreground
-        modifyListAction.destructive = false
-        modifyListAction.authenticationRequired = true
         
-        
-        var trashAction = UIMutableUserNotificationAction()
-        trashAction.identifier = "trashAction"
-        trashAction.title = "Delete list"
-        trashAction.activationMode = UIUserNotificationActivationMode.Foreground
-        trashAction.destructive = false
-        trashAction.authenticationRequired = true
-        
-        let actionsArray = [justInformAction, modifyListAction, trashAction]
-        let actionsArrayMinimal = [trashAction, modifyListAction]
-        
-        
-        var shoppingListReminderCategory = UIMutableUserNotificationCategory()
-        shoppingListReminderCategory.identifier = "shoppingListReminderCategory"
-        shoppingListReminderCategory.setActions(actionsArray, forContext: UIUserNotificationActionContext.Default)
-        shoppingListReminderCategory.setActions(actionsArrayMinimal, forContext: UIUserNotificationActionContext.Minimal)
-
     }
     
 
